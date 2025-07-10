@@ -6,11 +6,11 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import MetaData, Row, Select, Table, select, ScalarResult
 
-from dbmanager.base_manager import BaseDBmanager, TableArgType
-from dbmanager.db_config import DBmanagerConfig
-from dbmanager.reflection import gen_table_model_str
-from dbmanager.sql_util import reflect_table
-from dbmanager.util import identity
+from warehouser.base_manager import BaseDBmanager, TableArgType
+from warehouser.db_config import DBmanagerConfig
+from warehouser.reflection import gen_table_model_str
+from warehouser.sql_util import reflect_table
+from warehouser.util import identity
 
 
 class DBmanager(BaseDBmanager):

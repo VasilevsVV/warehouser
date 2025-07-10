@@ -2,8 +2,8 @@ from typing import Any, Optional
 from sqlalchemy import Column, Engine, MetaData, Table
 from trent import cfilter, cmap, coll
 
-from dbmanager.const import LAST_UPDATE_COLUMN_NAME
-from dbmanager.util import constantly, identity, str_joiner
+from warehouser.const import LAST_UPDATE_COLUMN_NAME
+from warehouser.util import constantly, identity, str_joiner
 
 
 def _get_table_columns(table:Table, *, 

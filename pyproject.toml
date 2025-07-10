@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dbmanager"
+name = "warehouser"
 version = "0.3.7"
 authors = [
   { name="Vasyl Tsiura" },

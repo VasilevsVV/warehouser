@@ -4,9 +4,9 @@ from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.sql.cache_key import HasCacheKey
 from abc import abstractmethod
 
-from dbmanager.db_config import supportedDbms
-from dbmanager.sql_util import update_columns_str
-from dbmanager.util import str_joiner
+from warehouser.db_config import supportedDbms
+from warehouser.sql_util import update_columns_str
+from warehouser.util import str_joiner
 from trent import cmap
 
 # from src.config.db_config import METADATA, supportedDbms

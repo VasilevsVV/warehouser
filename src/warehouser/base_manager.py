@@ -35,14 +35,14 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Session
 
-from dbmanager.const import LAST_UPDATE_COLUMN_NAME
-from dbmanager.db_config import DBmanagerConfig, supportedDbms
+from warehouser.const import LAST_UPDATE_COLUMN_NAME
+from warehouser.db_config import DBmanagerConfig, supportedDbms
 
 # from dbmanager.log import debug, exception
-from dbmanager.log import DbLogger, DbLoggerBase, make_db_logger
-from dbmanager.sql_builder import SQLBuilder, make_sql_builder
-from dbmanager.sql_util import table_data_columns
-from dbmanager.util import (
+from warehouser.log import DbLogger, DbLoggerBase, make_db_logger
+from warehouser.sql_builder import SQLBuilder, make_sql_builder
+from warehouser.sql_util import table_data_columns
+from warehouser.util import (
     current_utc_timestamp,
     getin,
     isnot_none,

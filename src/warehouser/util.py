@@ -4,7 +4,7 @@ import os
 import time
 from typing import Any, Callable, Hashable, Iterable, Sequence, TypeAlias, TypeVar
 
-from dbmanager.log import DbLogger, DbLoggerBase, make_db_logger
+from warehouser.log import DbLogger, DbLoggerBase, make_db_logger
 
 # from dbmanager.log import error, exception
 

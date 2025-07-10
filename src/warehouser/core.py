@@ -3,8 +3,8 @@ import os
 from typing import Optional
 
 from sqlalchemy import MetaData
-from dbmanager.db_config import DBmanagerConfig, db_config_from_dict
-from dbmanager.manager import DBmanager
+from warehouser.db_config import DBmanagerConfig, db_config_from_dict
+from warehouser.manager import DBmanager
 
 
 
