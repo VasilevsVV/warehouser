@@ -3,20 +3,20 @@ import os
 from typing import Optional
 
 from sqlalchemy import MetaData
-from warehouser.db_config import DBmanagerConfig, db_config_from_dict
-from warehouser.manager import DBmanager
+from warehouser.db_config import WarehouserConfig, db_config_from_dict
+from warehouser.manager import Warehouser
 
 
 
-def make_db_manager(config: dict|DBmanagerConfig, metadata: MetaData, *,
+def make_warehouser(config: dict|WarehouserConfig, metadata: MetaData, *,
                     partition_size:int = 5000,
                     safe: bool = True,
-                    logger: Optional[Logger] = None) -> DBmanager:
+                    logger: Optional[Logger] = None) -> Warehouser:
     if isinstance(config, dict):
         _config = db_config_from_dict(config)
     else:
         _config = config
-    return DBmanager(_config.database, _config, metadata,
+    return Warehouser(_config.database, _config, metadata,
                      partition_size=partition_size,
                      logger=logger,
                      safe=safe)

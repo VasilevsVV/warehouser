@@ -36,7 +36,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Session
 
 from warehouser.const import LAST_UPDATE_COLUMN_NAME
-from warehouser.db_config import DBmanagerConfig, supportedDbms
+from warehouser.db_config import WarehouserConfig, supportedDbms
 
 # from dbmanager.log import debug, exception
 from warehouser.log import DbLogger, DbLoggerBase, make_db_logger
@@ -58,13 +58,13 @@ TableArgType = str|Table|Type[DeclarativeBase]
 T = TypeVar('T')
 _TP = TypeVar("_TP", bound=Tuple[Any, ...])
 
-class BaseDBmanager():
-    def __init__(self, database, config: DBmanagerConfig, metadata: MetaData, *,
+class BaseWarehouser():
+    def __init__(self, database, config: WarehouserConfig, metadata: MetaData, *,
                 partition_size:int=500,
                 safe:bool=True,
                 logger: Optional[Logger] = None) -> None:
         self._logger: DbLoggerBase = make_db_logger(logger)
-        self._config: DBmanagerConfig = config
+        self._config: WarehouserConfig = config
         self._config.database = database
         self._sql_builder:SQLBuilder = make_sql_builder(metadata, self._config.dbms)
         self._safe = safe
@@ -135,7 +135,7 @@ class BaseDBmanager():
         if database in self._db_engines:
             return self._db_engines[database]
         host, port, user, password = self._config.db_params()
-        eng = DBmanagerConfig.make_engine(self._config.dbms, user, password, host, port, database=database)
+        eng = WarehouserConfig.make_engine(self._config.dbms, user, password, host, port, database=database)
         self._db_engines[database] = eng
         return eng
     
@@ -260,7 +260,7 @@ class BaseDBmanager():
                with_last_updated: bool = False,
                chunk_size:Optional[int]=None) -> int:
         self.__except_if_not_defined(table)
-        data_list = BaseDBmanager._prepare_rows(data)
+        data_list = BaseWarehouser._prepare_rows(data)
         t = self.get_table(table)
         chunk_size = chunk_size if chunk_size else self._partition
         
@@ -272,7 +272,7 @@ class BaseDBmanager():
                columns=None,
                on_colflict_ignore: bool = True,
                chunk_size:Optional[int] = None) -> int:
-        data_list = BaseDBmanager._prepare_rows(data)
+        data_list = BaseWarehouser._prepare_rows(data)
         t = self.get_table(table)
         chunk_size = chunk_size if chunk_size else self._partition
         __on_conflict = 'ignore' if on_colflict_ignore else 'error'
@@ -404,7 +404,7 @@ class BaseDBmanager():
     
     
     def get_table(self, table:TableArgType, /) -> Table:
-        t = BaseDBmanager.__get_table(self._metadata, table)
+        t = BaseWarehouser.__get_table(self._metadata, table)
         if t is None:
             raise SyntaxError(f'Table {table} is not defined!!')
         return t

@@ -43,7 +43,7 @@ def _engine_type(rdbms:supportedDbms) -> str:
 
 
 
-class DBmanagerConfig:
+class WarehouserConfig:
     """DBmanager config class.
     Contains full database config data, needed for connection and vendor specific logic.
     Contains fields:
@@ -70,7 +70,7 @@ class DBmanagerConfig:
         assert dbms in get_args(supportedDbms), f'Unsupported DBMS literal. Must be one of: {get_args(supportedDbms)}'
         self.__dbms: supportedDbms = dbms
         self.__host: str = host
-        self.__port: str = DBmanagerConfig.__dbms_port(dbms, port)
+        self.__port: str = WarehouserConfig.__dbms_port(dbms, port)
         self.__user: str = user
         self.__pwd: str  = pwd
         self.__database: str = database
@@ -112,7 +112,7 @@ class DBmanagerConfig:
         self.__database = database_name
     
     def engine_str(self):
-        return DBmanagerConfig.make_eng_str(self.dbms, self.user, self.pwd, self.host, self.port, database=self.__database)
+        return WarehouserConfig.make_eng_str(self.dbms, self.user, self.pwd, self.host, self.port, database=self.__database)
     
     def db_params(self) -> tuple[str, str, str, str]:
         """Returns tuple with (host, port, user, password) - Config parameters for current DB.
@@ -178,7 +178,7 @@ class DBmanagerConfig:
         return create_engine(f'{engine_type}://{user}:{password}@{host}:{port}{dbstr}')
 
 
-def db_config_from_dict(config_dict: dbConfigDict, /) -> DBmanagerConfig:
+def db_config_from_dict(config_dict: dbConfigDict, /) -> WarehouserConfig:
     d = config_dict
     assert 'dbms' in d,     'Missing "dbms" field in DB config!'
     assert 'host' in d,     'Missing "host" field in DB config!'
@@ -191,7 +191,7 @@ def db_config_from_dict(config_dict: dbConfigDict, /) -> DBmanagerConfig:
     assert isinstance(host, str), f'"host" field must by str! Got: {host}'
     assert isinstance(port, Optional[str]), f'"port" field must by str|None! Got: {port}'
     assert isinstance(database, str), f'"database" field must by str! Got: {database}'
-    return DBmanagerConfig(
+    return WarehouserConfig(
         d['dbms'], # type: ignore
         database,
         user,

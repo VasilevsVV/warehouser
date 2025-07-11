@@ -6,17 +6,17 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import MetaData, Row, Select, Table, select, ScalarResult
 
-from warehouser.base_manager import BaseDBmanager, TableArgType
-from warehouser.db_config import DBmanagerConfig
+from warehouser.base_manager import BaseWarehouser, TableArgType
+from warehouser.db_config import WarehouserConfig
 from warehouser.reflection import gen_table_model_str
 from warehouser.sql_util import reflect_table
 from warehouser.util import identity
 
 
-class DBmanager(BaseDBmanager):
+class Warehouser(BaseWarehouser):
     def __init__(self,
                  database: str,
-                 config: DBmanagerConfig,
+                 config: WarehouserConfig,
                  metadata: MetaData,
                  /, *,
                  logger: Optional[Logger] = None,
@@ -43,7 +43,7 @@ class DBmanager(BaseDBmanager):
     #               BACKUP
     
     
-    def backup_table(self, table:TableArgType, target_dbm:Optional[BaseDBmanager]=None):
+    def backup_table(self, table:TableArgType, target_dbm:Optional[BaseWarehouser]=None):
         target_dbm = target_dbm if target_dbm else self
         t = self.get_table(table)
         if t.schema is not None:
@@ -57,7 +57,7 @@ class DBmanager(BaseDBmanager):
         target_dbm.upsert(bak, data)
             
     
-    def restore_table(self, table:TableArgType, source_dbm:Optional[BaseDBmanager]=None) -> bool:
+    def restore_table(self, table:TableArgType, source_dbm:Optional[BaseWarehouser]=None) -> bool:
         source_dbm = source_dbm if source_dbm else self
         t = self.get_table(table)
         bak = self.table_backup_copy(t)
@@ -101,7 +101,7 @@ Check if you dont have any new NOT NULL columns in table!''')
             Table: Table
         """        
         t = self.get_table(table)
-        bak = self._make_table_copy(t, DBmanager._backup_name(t))
+        bak = self._make_table_copy(t, Warehouser._backup_name(t))
         return bak
     
     
@@ -166,7 +166,7 @@ Check if you dont have any new NOT NULL columns in table!''')
     # ====================================================================================
     #               MIGRATION
     
-    def migrate_table_to(self, table: TableArgType, dest: "DBmanager", /, *,
+    def migrate_table_to(self, table: TableArgType, dest: "Warehouser", /, *,
                          rewrite: bool = False,
                          remake: bool = False,
                          create_if_not_exists: bool = False,
@@ -196,12 +196,12 @@ Check if you dont have any new NOT NULL columns in table!''')
             dest.upsert(t, rows, with_last_updated=True, chunk_size=_part_size)
     
     
-    def migrate_tables(self, tables:Iterable[TableArgType], dbm: "DBmanager"):
+    def migrate_tables(self, tables:Iterable[TableArgType], dbm: "Warehouser"):
         for t in tables:
             self.migrate_table_to(t, dbm)
     
     
-    def __upser_data_to_remote(self, dbm: BaseDBmanager, table:TableArgType, data: Iterable[dict]) -> bool:
+    def __upser_data_to_remote(self, dbm: BaseWarehouser, table:TableArgType, data: Iterable[dict]) -> bool:
         if isinstance(table, str):
             t = reflect_table(self._metadata, self.eng(), table)
         else:
@@ -212,7 +212,7 @@ Check if you dont have any new NOT NULL columns in table!''')
         return True
     
     
-    def migrate_data(self, table:TableArgType, dbm: BaseDBmanager) -> bool:
+    def migrate_data(self, table:TableArgType, dbm: BaseWarehouser) -> bool:
         t = self.get_table(table)
         data = self.select_from(t)
         return self.__upser_data_to_remote(dbm, table, data)
