@@ -178,7 +178,7 @@ class WarehouserConfig:
         return create_engine(f'{engine_type}://{user}:{password}@{host}:{port}{dbstr}')
 
 
-def db_config_from_dict(config_dict: dbConfigDict, /) -> WarehouserConfig:
+def config_from_dict(config_dict: dbConfigDict, /) -> WarehouserConfig:
     d = config_dict
     assert 'dbms' in d,     'Missing "dbms" field in DB config!'
     assert 'host' in d,     'Missing "host" field in DB config!'

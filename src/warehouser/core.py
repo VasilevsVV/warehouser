@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 from sqlalchemy import MetaData
-from warehouser.db_config import WarehouserConfig, db_config_from_dict
+from warehouser.db_config import WarehouserConfig, config_from_dict
 from warehouser.manager import Warehouser
 
 
@@ -13,7 +13,7 @@ def make_warehouser(config: dict|WarehouserConfig, metadata: MetaData, *,
                     safe: bool = True,
                     logger: Optional[Logger] = None) -> Warehouser:
     if isinstance(config, dict):
-        _config = db_config_from_dict(config)
+        _config = config_from_dict(config)
     else:
         _config = config
     return Warehouser(_config.database, _config, metadata,
