@@ -40,6 +40,7 @@ from warehouser.db_config import WarehouserConfig, supportedDbms
 
 # from dbmanager.log import debug, exception
 from warehouser.log import DbLogger, DbLoggerBase, make_db_logger
+from warehouser.reflection import reflect_table
 from warehouser.sql_builder import SQLBuilder, make_sql_builder
 from warehouser.sql_util import table_data_columns
 from warehouser.util import (
@@ -405,8 +406,10 @@ class BaseWarehouser():
     
     def get_table(self, table:TableArgType, /) -> Table:
         t = BaseWarehouser.__get_table(self._metadata, table)
+        if t is None and isinstance(table, str):
+            t = reflect_table(self._metadata, self.eng(), table)
         if t is None:
-            raise SyntaxError(f'Table {table} is not defined!!')
+            raise SyntaxError(f'Table {table} is not defined!! And failed to reflect!!')
         return t
     
     # =======================================================================
