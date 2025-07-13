@@ -111,8 +111,12 @@ class WarehouserConfig:
     def database(self, database_name: str):
         self.__database = database_name
     
-    def engine_str(self):
-        return WarehouserConfig.make_eng_str(self.dbms, self.user, self.pwd, self.host, self.port, database=self.__database)
+    def engine_str(self, database: Optional[str] = None):
+        _database = database if database else self.database
+        return WarehouserConfig.make_eng_str(self.dbms, self.user, self.pwd, self.host, self.port, database=_database)
+    
+    def engine(self, database: Optional[str] = None) -> Engine:
+        return create_engine(self.engine_str(database))
     
     def db_params(self) -> tuple[str, str, str, str]:
         """Returns tuple with (host, port, user, password) - Config parameters for current DB.
@@ -150,32 +154,6 @@ class WarehouserConfig:
         engine_type = _engine_type(rdbms)
         dbstr = f'/{database}' if database else ''
         return f'{engine_type}://{user}:{password}@{host}:{port}{dbstr}'
-    
-    
-    @staticmethod
-    def make_engine(rdbms:supportedDbms, 
-                    user:str, password:str, 
-                    host:str='localhost',
-                    port:Optional[str|int]=None, *,
-                    database:Optional[str]=None) -> Engine:
-        """Creates sqlalchemy Engine for use in DBmanager
-
-        Args:
-            rdbms ('mysql'|'postgres'): RDBMS to be used in engine
-            user (str): DB user
-            password (str): Password for user
-            host (str): DB host
-            port (str, optional): DB host port. If None - default port for chosen RDBMS will be used. Defaults to None.
-            database (str, optional): Database to be connected to. If None - connection to RDBMS root. Defaults to None.
-
-        Returns:
-            Engine: sqlalchemy engine class.
-        """
-        if not port:
-            port = _default_port(rdbms)
-        engine_type = _engine_type(rdbms)
-        dbstr = f'/{database}' if database else ''
-        return create_engine(f'{engine_type}://{user}:{password}@{host}:{port}{dbstr}')
 
 
 def config_from_dict(config_dict: dbConfigDict, /) -> WarehouserConfig:

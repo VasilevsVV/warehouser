@@ -70,7 +70,7 @@ class BaseWarehouser():
         self._sql_builder:SQLBuilder = make_sql_builder(metadata, self._config.dbms)
         self._safe = safe
         self._partition:int = partition_size
-        self._eng = create_engine(self._config.engine_str())
+        self._eng = self._config.engine()
         self._metadata: MetaData = metadata
         self._session: Optional[Session] = None
         self._db_engines: dict[str, Engine] = {}
@@ -135,8 +135,7 @@ class BaseWarehouser():
             return self._eng
         if database in self._db_engines:
             return self._db_engines[database]
-        host, port, user, password = self._config.db_params()
-        eng = WarehouserConfig.make_engine(self._config.dbms, user, password, host, port, database=database)
+        eng = self._config.engine(database)
         self._db_engines[database] = eng
         return eng
     
