@@ -40,6 +40,10 @@ def _engine_type(rdbms:supportedDbms) -> str:
     raise SyntaxError(f'Unsupported RDBMS: {rdbms}')
 
 
+class WhConfigBase:
+    def __init__(self) -> None:
+        pass
+    
 
 
 
@@ -70,17 +74,10 @@ class WarehouserConfig:
         assert dbms in get_args(supportedDbms), f'Unsupported DBMS literal. Must be one of: {get_args(supportedDbms)}'
         self.__dbms: supportedDbms = dbms
         self.__host: str = host
-        self.__port: str = WarehouserConfig.__dbms_port(dbms, port)
+        self.__port: str = str(port) if port else _default_port(dbms)
         self.__user: str = user
         self.__pwd: str  = pwd
         self.__database: str = database
-    
-    
-    @staticmethod
-    def __dbms_port(dbms: supportedDbms, port: Optional[portType]) -> str:
-        if port is None:
-            return _default_port(dbms)
-        return str(port)
     
     
     @property
