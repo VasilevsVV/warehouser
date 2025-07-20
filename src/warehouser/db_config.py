@@ -6,7 +6,7 @@ from typing import Literal, Optional, TypeAlias, get_args
 
 supportedDialects = Literal['mysql', 'postgresql', 'doris', 'sqlite']
 dbmsConfigDict = dict[Literal['host', 'port', 'user', 'password'], str]
-dbConfigDict: TypeAlias = dict[Literal['dbms', 'host', 'port', 'user', 'password', 'database'], str]
+dbConfigDict: TypeAlias = dict[Literal['dialect', 'host', 'port', 'user', 'password', 'database'], str]
 
 
 MYSQL_DEFAULT_PORT = "3306"
@@ -177,19 +177,25 @@ class SqliteWhConfig(WarehouserConfig):
 
 def config_from_dict(config_dict: dbConfigDict, /) -> WarehouserConfig:
     d = config_dict
-    assert 'dbms' in d,     'Missing "dbms" field in DB config!'
-    assert 'host' in d,     'Missing "host" field in DB config!'
-    assert 'user' in d,     'Missing "user" field in DB config!'
-    assert 'password' in d, 'Missing "password" field in DB config!'
-    assert d['dbms'] in get_args(supportedDialects), f'Unsupported "dbms" field value. Must be one of: {get_args(supportedDialects)}'
-    user, password, host, port, database = get_keys(d, ('user', 'password', 'host', 'port', 'database'))
+    assert 'dialect' in d,  'Missing "dialect" field in DB config!'
+    assert d['dialect'] in get_args(supportedDialects), f'Unsupported "dbms" field value. Must be one of: {get_args(supportedDialects)}'
+    
+    # assert 'host' in d,     'Missing "host" field in DB config!'
+    if d['dialect'] != 'sqlite':
+        assert 'user' in d,     'Missing "user" field in DB config!'
+        assert 'password' in d, 'Missing "password" field in DB config!'
+    
+    dialect, user, password, host, port, database = get_keys(d, ('dialect', 'user', 'password', 'host', 'port', 'database'))
+    assert isinstance(database, str), f'"database" field must by str! Got: {database}'
+    if dialect == 'sqlite':
+        return SqliteWhConfig(database)
+    
     assert isinstance(user, str), f'"user" field must be str! Got: {d["user"]}'
     assert isinstance(password, str), f'"password" field must be str! Got: {d["password"]}'
-    assert isinstance(host, str), f'"host" field must by str! Got: {host}'
+    assert isinstance(host, Optional[str]), f'"host" field must by str! Got: {host}'
     assert isinstance(port, Optional[str]), f'"port" field must by str|None! Got: {port}'
-    assert isinstance(database, str), f'"database" field must by str! Got: {database}'
     return WarehouserConfig(
-        d['dbms'], # type: ignore
+        dialect,
         database,
         user,
         password,
