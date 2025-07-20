@@ -60,13 +60,13 @@ T = TypeVar('T')
 _TP = TypeVar("_TP", bound=Tuple[Any, ...])
 
 class BaseWarehouser():
-    def __init__(self, database, config: WarehouserConfig, metadata: MetaData, *,
+    def __init__(self, config: WarehouserConfig, metadata: MetaData, *,
                 partition_size:int=500,
                 safe:bool=True,
                 logger: Optional[Logger] = None) -> None:
         self._logger: DbLoggerBase = make_db_logger(logger)
         self._config: WarehouserConfig = config
-        self._config.database = database
+        # self._config.database = database
         self._sql_builder:SQLBuilder = make_sql_builder(metadata, self._config.dialect)
         self._safe = safe
         self._partition:int = partition_size
@@ -414,7 +414,7 @@ class BaseWarehouser():
     # =======================================================================
     
     def __repr__(self) -> str:
-        return f'DBmanager[{self._config.dialect}:"{self._config.engine_str()}"]'
+        return f'Warehouser[{self._config.dialect}:"{self._config.engine_str()}"]'
     
     
     # =======================================================================

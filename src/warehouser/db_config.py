@@ -18,31 +18,35 @@ MYSQL_ENGINE = 'pymysql'
 
 portType: TypeAlias = str|int
 
-def _default_host(dbms:supportedDialects) -> str:
-    if dbms == 'sqlite':
+def _default_host(dialect:supportedDialects) -> str:
+    if dialect == 'sqlite':
         return ''
     return 'localhost'
 
-def _default_port(rdbms:supportedDialects) -> str:
-    match rdbms:
+def _default_port(dialect:supportedDialects) -> str:
+    match dialect:
         case 'mysql':
             return MYSQL_DEFAULT_PORT
         case 'postgresql':
             return PG_DEFAULT_PORT
         case 'doris':
             return DORIS_DEFULT_PORT
-    raise SyntaxError(f'Unsupported RDBMS: {rdbms}')
+        case 'sqlite':
+            return ''
+    raise SyntaxError(f'Unsupported RDBMS: {dialect}')
 
 
-def _engine_type(rdbms:supportedDialects) -> str:
-    match rdbms:
+def _dialect_engine_str(dialect:supportedDialects) -> str:
+    match dialect:
         case 'mysql':
             return f'mysql+{MYSQL_ENGINE}'
         case 'postgresql':
             return 'postgresql+psycopg2'
         case 'doris':
             return f'doris+{MYSQL_ENGINE}'
-    raise SyntaxError(f'Unsupported RDBMS: {rdbms}')
+        case 'sqlite':
+            return 'sqlite'
+    raise SyntaxError(f'Unsupported RDBMS: {dialect}')
 
 
 class WarehouserConfig:
@@ -106,10 +110,15 @@ class WarehouserConfig:
     @database.setter
     def database(self, database_name: str):
         self.__database = database_name
+        
+    
+    def address_login_str(self) -> str:
+        return f'{self.user}:{self.pwd}@{self.host}:{self.port}'
+    
     
     def engine_str(self, database: Optional[str] = None):
         _database = database if database else self.database
-        return WarehouserConfig.make_eng_str(self.dialect, self.user, self.pwd, self.host, self.port, database=_database)
+        return WarehouserConfig.make_eng_str(self.dialect, self.address_login_str(), database=_database)
     
     def engine(self, database: Optional[str] = None) -> Engine:
         return create_engine(self.engine_str(database))
@@ -126,13 +135,12 @@ class WarehouserConfig:
     
     def __repr__(self) -> str:
         eng_str = self.engine_str()
-        return 'DBmanagerConf[{}:"{}"]'.format(self.dialect, eng_str)
+        return 'WarehouserConfig[{}:"{}"]'.format(self.dialect, eng_str)
     
     @staticmethod
     def make_eng_str(rdbms:supportedDialects, 
-                    user:str, password:str, 
-                    host:str,
-                    port:str, *,
+                    address_login_str: str,
+                    *,
                     database:Optional[str]=None) -> str:
         """Creates sqlalchemy Engine for use in DBmanager
 
@@ -147,14 +155,25 @@ class WarehouserConfig:
         Returns:
             Engine: sqlalchemy engine class.
         """
-        engine_type = _engine_type(rdbms)
+        engine_type = _dialect_engine_str(rdbms)
         dbstr = f'/{database}' if database else ''
-        return f'{engine_type}://{user}:{password}@{host}:{port}{dbstr}'
+        return f'{engine_type}://{address_login_str}{dbstr}'
 
 
 class SqliteWhConfig(WarehouserConfig):
     def __init__(self, database: str) -> None:
         super().__init__('sqlite', database, '', '')
+    
+    def address_login_str(self) -> str:
+        return ''
+    
+    # def engine_str(self, database: Optional[str] = None):
+    #     _database = database if database else self.database
+    #     # return WarehouserConfig.make_eng_str(self.dialect, self.user, self.pwd, self.host, self.port, database=_database)
+    #     return f'sqlite:///{_database}'
+
+
+
 
 def config_from_dict(config_dict: dbConfigDict, /) -> WarehouserConfig:
     d = config_dict

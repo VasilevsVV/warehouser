@@ -15,14 +15,14 @@ from warehouser.util import identity
 
 class Warehouser(BaseWarehouser):
     def __init__(self,
-                 database: str,
+                #  database: str,
                  config: WarehouserConfig,
                  metadata: MetaData,
                  /, *,
                  logger: Optional[Logger] = None,
                  partition_size:int=500,
                  safe:bool=True) -> None:
-        super().__init__(database, config, metadata,
+        super().__init__(config, metadata,
                          logger=logger,
                          partition_size=partition_size,
                          safe=safe)
