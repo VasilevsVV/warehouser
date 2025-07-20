@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 from sqlalchemy import Insert, MetaData, Select, Table, Column, select, text
-from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.dialects import mysql, postgresql, sqlite
 from sqlalchemy.sql.cache_key import HasCacheKey
 from abc import abstractmethod
 
@@ -57,7 +57,7 @@ class SQLBuilder():
         pass
     
     @abstractmethod
-    def insert(self, table:Table, columns:Optional[list]=None, /, *,
+    def insert(self, table:Table, /, *,
                     exclude_cols:list=[],
                     on_conflict_do: OnConflictLiteral = 'update') -> Insert:
         pass
@@ -122,13 +122,11 @@ class MysqlBuilder(SQLBuilder):
         return query
     
     
-    def insert(self, table: Table, columns: Optional[list]=None, /, *,
+    def insert(self, table: Table, /, *,
                     exclude_cols:list=[],
                     on_conflict_do: OnConflictLiteral = 'update') -> Insert:
         cols = table.columns.keys()
         cols = [c for c in cols if c not in exclude_cols]
-        if columns:
-            cols = [c for c in cols if c in columns]
         match on_conflict_do:
             case 'ignore':
                 q = mysql.insert(table).prefix_with("IGNORE")
@@ -154,7 +152,7 @@ class PgBuilder(SQLBuilder):
         return query
     
     
-    def insert(self, table: Table, columns: Optional[list] = None, /, *,
+    def insert(self, table: Table, /, *,
                exclude_cols: list = [],
                on_conflict_do: OnConflictLiteral = 'update') -> Insert:
         q = postgresql.insert(table)
@@ -180,12 +178,39 @@ class DorisBuilder(SQLBuilder):
         return q
     
     
-    def insert(self, table: Table, columns: Optional[list] = None, /, *,
+    def insert(self, table: Table, /, *,
                exclude_cols: list = [],
                on_conflict_do: OnConflictLiteral = 'update') -> Insert:
         q = mysql.insert(table)
         return q
 
+
+class SqliteBuilder(SQLBuilder):
+    def __init__(self, metadata) -> None:
+        super().__init__(metadata)
+    
+    
+    def insert_row(self, table: Table, data_row: dict, /, *,
+                   update: bool = True) -> Insert:
+        return sqlite.insert(table).values(data_row)
+    
+    
+    def insert(self, table: Table, columns: list | None = None, /, *, 
+               exclude_cols: list = [], 
+               on_conflict_do: OnConflictLiteral = 'update') -> Insert:
+        q = sqlite.insert(table)
+        if on_conflict_do == 'ignore':
+            q = q.on_conflict_do_nothing(index_elements=table.primary_key.columns)
+            return q
+        if on_conflict_do == 'update':
+            # q = q.on_conflict_do_update(table.primary_key.columns)
+            primary_keys = list(table.primary_key.columns)
+            pk_col_names = [c.name for c in primary_keys]
+            update_cols = [c.name for c in table.c if c.name not in exclude_cols + pk_col_names]
+            __set = {k: q.excluded.get(k) for k in update_cols}
+            q = q.on_conflict_do_update(index_elements=primary_keys, set_=__set)
+            return q
+        return q
 
 def make_sql_builder(mtd: MetaData, dbms: supportedDialects) -> SQLBuilder:
     match dbms:
@@ -196,4 +221,4 @@ def make_sql_builder(mtd: MetaData, dbms: supportedDialects) -> SQLBuilder:
         case 'doris':
             return DorisBuilder(mtd)
         case 'sqlite':
-            return SQLBuilder(mtd)
+            return SqliteBuilder(mtd)

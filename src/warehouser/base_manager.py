@@ -106,6 +106,10 @@ class BaseWarehouser():
     def engine(self) -> Engine:
         return self.eng()
     
+    @property
+    def builder(self) -> SQLBuilder:
+        return self._sql_builder
+    
     
     def conn(self, database:Optional[str]=None) -> Connection:
         if not database:
@@ -276,7 +280,7 @@ class BaseWarehouser():
         t = self.get_table(table)
         chunk_size = chunk_size if chunk_size else self._partition
         __on_conflict = 'ignore' if on_colflict_ignore else 'error'
-        q = self._sql_builder.insert(t, columns, exclude_cols=[LAST_UPDATE_COLUMN_NAME],
+        q = self._sql_builder.insert(t, exclude_cols=[LAST_UPDATE_COLUMN_NAME],
                                      on_conflict_do=__on_conflict)
         count = self._insert_chunked(q, chunk_size, data_list)
         return count
@@ -399,7 +403,7 @@ class BaseWarehouser():
     
     def _retries(self) -> int:
         if self._safe:
-            return 5
+            return 1
         return 0
     
     
@@ -471,7 +475,10 @@ class BaseWarehouser():
                 return metadata.tables[table]
             return None
         tname = table.__tablename__
-        schema = getin(table.__table_args__, ['schema'])
+        if hasattr(table, '__table_args__'):
+            schema = getin(table.__table_args__, ['schema'])
+        else:
+            schema = None
         if schema:
             tname = f'{schema}.{tname}'
         if tname in table.metadata.tables:
