@@ -16,7 +16,7 @@ def make_warehouser(config: dict|WarehouserConfig, metadata: MetaData, *,
         _config = config_from_dict(config)
     else:
         _config = config
-    return Warehouser(_config.database, _config, metadata,
+    return Warehouser(_config, metadata,
                      partition_size=partition_size,
                      logger=logger,
                      safe=safe)
