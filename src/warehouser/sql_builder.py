@@ -195,5 +195,5 @@ def make_sql_builder(mtd: MetaData, dbms: supportedDialects) -> SQLBuilder:
             return PgBuilder(mtd)
         case 'doris':
             return DorisBuilder(mtd)
-        case 'sqlight':
+        case 'sqlite':
             return SQLBuilder(mtd)

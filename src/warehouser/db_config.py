@@ -4,7 +4,7 @@ from typing import Literal, Optional, TypeAlias, get_args
 
 
 
-supportedDialects = Literal['mysql', 'postgresql', 'doris', 'sqlight']
+supportedDialects = Literal['mysql', 'postgresql', 'doris', 'sqlite']
 dbmsConfigDict = dict[Literal['host', 'port', 'user', 'password'], str]
 dbConfigDict: TypeAlias = dict[Literal['dbms', 'host', 'port', 'user', 'password', 'database'], str]
 
@@ -19,7 +19,7 @@ MYSQL_ENGINE = 'pymysql'
 portType: TypeAlias = str|int
 
 def _default_host(dbms:supportedDialects) -> str:
-    if dbms == 'sqlight':
+    if dbms == 'sqlite':
         return ''
     return 'localhost'
 
@@ -49,7 +49,7 @@ class WarehouserConfig:
     """DBmanager config class.
     Contains full database config data, needed for connection and vendor specific logic.
     Contains fields:
-        dialect (str): SQL  dialect name. Can be on of: ['mysql', 'postgresql', 'doris', 'sqlight']\n
+        dialect (str): SQL  dialect name. Can be on of: ['mysql', 'postgresql', 'doris', 'sqlite']\n
         host (str): DBMS host\n
         port (str): DBMS port\n
         user (str): DBMS user name\n
@@ -152,9 +152,9 @@ class WarehouserConfig:
         return f'{engine_type}://{user}:{password}@{host}:{port}{dbstr}'
 
 
-class SqlightWhConfig(WarehouserConfig):
+class SqliteWhConfig(WarehouserConfig):
     def __init__(self, database: str) -> None:
-        super().__init__('sqlight', database, '', '')
+        super().__init__('sqlite', database, '', '')
 
 def config_from_dict(config_dict: dbConfigDict, /) -> WarehouserConfig:
     d = config_dict
