@@ -4,7 +4,7 @@ from typing import Literal, Optional, TypeAlias, get_args
 
 
 
-supportedDbms = Literal['mysql', 'postgres', 'doris']
+supportedDialects = Literal['mysql', 'postgresql', 'doris', 'sqlight']
 dbmsConfigDict = dict[Literal['host', 'port', 'user', 'password'], str]
 dbConfigDict: TypeAlias = dict[Literal['dbms', 'host', 'port', 'user', 'password', 'database'], str]
 
@@ -18,71 +18,70 @@ MYSQL_ENGINE = 'pymysql'
 
 portType: TypeAlias = str|int
 
-def _default_port(rdbms:supportedDbms) -> str:
+def _default_host(dbms:supportedDialects) -> str:
+    if dbms == 'sqlight':
+        return ''
+    return 'localhost'
+
+def _default_port(rdbms:supportedDialects) -> str:
     match rdbms:
         case 'mysql':
             return MYSQL_DEFAULT_PORT
-        case 'postgres':
+        case 'postgresql':
             return PG_DEFAULT_PORT
         case 'doris':
             return DORIS_DEFULT_PORT
     raise SyntaxError(f'Unsupported RDBMS: {rdbms}')
 
 
-def _engine_type(rdbms:supportedDbms) -> str:
+def _engine_type(rdbms:supportedDialects) -> str:
     match rdbms:
         case 'mysql':
             return f'mysql+{MYSQL_ENGINE}'
-        case 'postgres':
+        case 'postgresql':
             return 'postgresql+psycopg2'
         case 'doris':
             return f'doris+{MYSQL_ENGINE}'
     raise SyntaxError(f'Unsupported RDBMS: {rdbms}')
 
 
-class WhConfigBase:
-    def __init__(self) -> None:
-        pass
-    
-
-
-
 class WarehouserConfig:
     """DBmanager config class.
     Contains full database config data, needed for connection and vendor specific logic.
     Contains fields:
-        dbms (str): Database management system name. Can be on of: ['mysql', 'postgres']\n
+        dialect (str): SQL  dialect name. Can be on of: ['mysql', 'postgresql', 'doris', 'sqlight']\n
         host (str): DBMS host\n
         port (str): DBMS port\n
         user (str): DBMS user name\n
         pwd (str): DBMS user password\n
         database (str, optional): Database name to be used in connection. Defaults to None.
     """
-    def __init__(self, dbms: supportedDbms, database: str, user: str, pwd: str, /, *,
-                 host: str = 'localhost',
-                 port: Optional[portType] = None) -> None:
+    def __init__(self, dialect: supportedDialects, database: str, user: str, pwd: str, /, *,
+                 host: Optional[str] = None,
+                 port: Optional[portType] = None
+                 ) -> None:
         """Creates config object for DBmanager.
 
         Args:
-            dbms (str): Database management system name. Can be on of: ['mysql', 'postgres']
+            dbms (str): Database management system name. Can be on of: ['mysql', 'postgresql']
             host (str): DBMS host
             port (str): DBMS port
             user (str): DBMS user name
             pwd (str): DBMS user password
             database (str, optional): Database name to be used in connection. Defaults to None.
         """
-        assert dbms in get_args(supportedDbms), f'Unsupported DBMS literal. Must be one of: {get_args(supportedDbms)}'
-        self.__dbms: supportedDbms = dbms
-        self.__host: str = host
-        self.__port: str = str(port) if port else _default_port(dbms)
+        assert dialect in get_args(supportedDialects), f'Unsupported DBMS literal. Must be one of: {get_args(supportedDialects)}'
+        self.__dialect: supportedDialects = dialect
+        self.__host: str = host if host else _default_host(dialect)
+        self.__port: str = str(port) if port else _default_port(dialect)
         self.__user: str = user
         self.__pwd: str  = pwd
         self.__database: str = database
     
     
     @property
-    def dbms(self) -> supportedDbms:
-        return self.__dbms
+    def dialect(self) -> supportedDialects:
+        return self.__dialect
     
     @property
     def host(self) -> str:
@@ -110,7 +109,7 @@ class WarehouserConfig:
     
     def engine_str(self, database: Optional[str] = None):
         _database = database if database else self.database
-        return WarehouserConfig.make_eng_str(self.dbms, self.user, self.pwd, self.host, self.port, database=_database)
+        return WarehouserConfig.make_eng_str(self.dialect, self.user, self.pwd, self.host, self.port, database=_database)
     
     def engine(self, database: Optional[str] = None) -> Engine:
         return create_engine(self.engine_str(database))
@@ -127,10 +126,10 @@ class WarehouserConfig:
     
     def __repr__(self) -> str:
         eng_str = self.engine_str()
-        return 'DBmanagerConf[{}:"{}"]'.format(self.dbms, eng_str)
+        return 'DBmanagerConf[{}:"{}"]'.format(self.dialect, eng_str)
     
     @staticmethod
-    def make_eng_str(rdbms:supportedDbms, 
+    def make_eng_str(rdbms:supportedDialects, 
                     user:str, password:str, 
                     host:str,
                     port:str, *,
@@ -153,13 +152,17 @@ class WarehouserConfig:
         return f'{engine_type}://{user}:{password}@{host}:{port}{dbstr}'
 
 
+class SqlightWhConfig(WarehouserConfig):
+    def __init__(self, database: str) -> None:
+        super().__init__('sqlight', database, '', '')
+
 def config_from_dict(config_dict: dbConfigDict, /) -> WarehouserConfig:
     d = config_dict
     assert 'dbms' in d,     'Missing "dbms" field in DB config!'
     assert 'host' in d,     'Missing "host" field in DB config!'
     assert 'user' in d,     'Missing "user" field in DB config!'
     assert 'password' in d, 'Missing "password" field in DB config!'
-    assert d['dbms'] in get_args(supportedDbms), f'Unsupported "dbms" field value. Must be one of: {get_args(supportedDbms)}'
+    assert d['dbms'] in get_args(supportedDialects), f'Unsupported "dbms" field value. Must be one of: {get_args(supportedDialects)}'
     user, password, host, port, database = get_keys(d, ('user', 'password', 'host', 'port', 'database'))
     assert isinstance(user, str), f'"user" field must be str! Got: {d["user"]}'
     assert isinstance(password, str), f'"password" field must be str! Got: {d["password"]}'

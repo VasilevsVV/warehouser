@@ -4,7 +4,7 @@ from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.sql.cache_key import HasCacheKey
 from abc import abstractmethod
 
-from warehouser.db_config import supportedDbms
+from warehouser.db_config import supportedDialects
 from warehouser.sql_util import update_columns_str
 from warehouser.util import str_joiner
 from trent import cmap
@@ -187,11 +187,11 @@ class DorisBuilder(SQLBuilder):
         return q
 
 
-def make_sql_builder(mtd: MetaData, dbms: supportedDbms) -> SQLBuilder:
+def make_sql_builder(mtd: MetaData, dbms: supportedDialects) -> SQLBuilder:
     match dbms:
         case 'mysql':
             return MysqlBuilder(mtd)
-        case 'postgres':
+        case 'postgresql':
             return PgBuilder(mtd)
         case 'doris':
             return DorisBuilder(mtd)

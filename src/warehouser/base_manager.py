@@ -36,7 +36,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Session
 
 from warehouser.const import LAST_UPDATE_COLUMN_NAME
-from warehouser.db_config import WarehouserConfig, supportedDbms
+from warehouser.db_config import WarehouserConfig, supportedDialects
 
 # from dbmanager.log import debug, exception
 from warehouser.log import DbLogger, DbLoggerBase, make_db_logger
@@ -67,7 +67,7 @@ class BaseWarehouser():
         self._logger: DbLoggerBase = make_db_logger(logger)
         self._config: WarehouserConfig = config
         self._config.database = database
-        self._sql_builder:SQLBuilder = make_sql_builder(metadata, self._config.dbms)
+        self._sql_builder:SQLBuilder = make_sql_builder(metadata, self._config.dialect)
         self._safe = safe
         self._partition:int = partition_size
         self._eng = self._config.engine()
@@ -79,12 +79,12 @@ class BaseWarehouser():
     # ====================   INTERFACE   ========================
     
     @property
-    def dbms(self) -> supportedDbms:
-        return self._config.dbms
+    def dbms(self) -> supportedDialects:
+        return self._config.dialect
     
     @property
-    def dialect(self) -> supportedDbms:
-        return self._config.dbms
+    def dialect(self) -> supportedDialects:
+        return self._config.dialect
     
     @property
     def database(self) -> str:
@@ -373,10 +373,10 @@ class BaseWarehouser():
         if not exists:
             self._logger.debug(f"Table '{t.fullname}' does not exist. Skipping DROP TABLE.")
             return False
-        if not self._safe and self._config.dbms == 'mysql':
+        if not self._safe and self._config.dialect == 'mysql':
             self.execute(text('SET FOREIGN_KEY_CHECKS=0'))
         t.drop(self._eng)
-        if not self._safe and self._config.dbms == 'mysql':
+        if not self._safe and self._config.dialect == 'mysql':
             self.execute(text('SET FOREIGN_KEY_CHECKS=1'))
         return True
     
@@ -414,7 +414,7 @@ class BaseWarehouser():
     # =======================================================================
     
     def __repr__(self) -> str:
-        return f'DBmanager[{self._config.dbms}:"{self._config.engine_str()}"]'
+        return f'DBmanager[{self._config.dialect}:"{self._config.engine_str()}"]'
     
     
     # =======================================================================
