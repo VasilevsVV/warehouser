@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "warehouser"
-version = "0.3.7"
+version = "0.4.0"
 authors = [
   { name="Vasyl Tsiura" },
 ]
-description = "Medical Procurement of Ukraine DataLakeHouse project."
+description = "Package for managing you Database and using it as a Data Warehouse."
 readme = "README.md"
 requires-python = ">=3.10.12"
 classifiers = [
@@ -45,3 +45,25 @@ exclude = [
     ]
 typeCheckingMode = "standard"
 stubPath = ""
+
+
+# =================================================================
+#           TESTING
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+
+pythonpath = [
+    "src"
+]
+testpaths = [
+    "test"
+]
+python_files = [
+    'test_*.py', 
+    '*_test.py'
+]
+python_functions = [
+    'test_*',
+    '*_test'
+    ]
